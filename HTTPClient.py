@@ -58,10 +58,12 @@ def http_client(host, request):
 
 
 def implement_help():
-    if len(sys.argv) == 3 and args.help_for is not None :
-        if arg.help_for.lower() == "get":
+    parser.add_argument("help_for", nargs="?", help="get help for", choices=["get", "post", "GET", "POST"])
+    args = parser.parse_args()
+    if len(sys.argv) == 3 and args.help_for is not None:
+        if args.help_for.lower() == "get":
             print("get help")
-        elif arg.help_for.lower() == "post":
+        elif args.help_for.lower() == "post":
             print("post help")
     elif len(sys.argv) == 2:
         print("program help")
@@ -144,14 +146,12 @@ def implement_post():
 
 
 def implement_get():
-    group = parser.add_mutually_exclusive_group()
     parser.add_argument("-v", "--v", action="store_true", help="Display additional information")
     parser.add_argument("-h", "--h", action="append", nargs="+", help="Input headers for the request")
     parser.add_argument("-o", "--o", help="Output data to file")
     parser.add_argument("URL", help="URL for sending request")
-    args=parser.parse_args()
-    url = args.URL
-    parser.add_argument("URL", nargs="?", help="URL for sending request")
+    print(parser.parse_args())
+    args = parser.parse_args()
     url = args.URL
     if uri_validator(url):
         print("valid")
@@ -208,7 +208,6 @@ def implement_get():
 # Usage: python echoclient.py --host host --port port
 parser = argparse.ArgumentParser(add_help=False, prog = "httpc")
 parser.add_argument("method", help="HTTP method needed to implement", type=str, choices=["get", "post", "GET", "POST", "help", "HELP"])
-parser.add_argument("help_for", nargs="?", help="get help for",choices=["get", "post", "GET", "POST"])
 arg = parser.parse_args()
 if arg.method.lower() == "get":
     implement_get()
