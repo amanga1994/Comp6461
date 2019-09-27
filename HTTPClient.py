@@ -52,6 +52,7 @@ def http_client(host, request):
                 output += response.decode("utf-8")
             else:
                 break
+        print(output);
         return output
     finally:
         conn.close()
@@ -207,12 +208,16 @@ def implement_get():
 
 # Usage: python echoclient.py --host host --port port
 parser = argparse.ArgumentParser(add_help=False, prog = "httpc")
-parser.add_argument("method", help="HTTP method needed to implement", type=str, choices=["get", "post", "GET", "POST", "help", "HELP"])
+parser.add_argument("method", help="HTTP method needed to implement", type=str, choices=["get", "post", "GET", "POST", "help", "HELP", "redirect"])
 arg = parser.parse_args()
-if arg.method.lower() == "get":
-    implement_get()
-elif arg.method.lower() == "help":
-    implement_help()
-elif arg.method.lower() == "post":
-    implement_post()
-# http_client(args.host, args.port)
+print("hi",arg)
+# if arg.method.lower() == "get":
+#     implement_get()
+# elif arg.method.lower() == "help":
+#     implement_help()
+# elif arg.method.lower() == "post":
+#     implement_post()
+host = "httpbin.org";
+request = "GET /absolute-redirect/1 HTTP/1.0\r\n\r\n";
+if arg.method.lower() == "redirect":
+    http_client(host, request)
