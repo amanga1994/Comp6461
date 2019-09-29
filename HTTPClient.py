@@ -21,9 +21,8 @@ SCHEME_FORMAT = re.compile(
 )
 
 
-def validate_url(url: str):
+def validate_url(url):
     url = url.strip()
-
     if not url:
         raise Exception("No URL specified")
 
@@ -113,44 +112,12 @@ def implement_help(args):
 
 def implement_post(args):
     url = args.URL
-    start = url.find("/")
-    n = 3
-    i = 0
-    while start >= 0 and i < n - 1:
-        start = url.find("/", start + 1)
-        i += 1
-    path = url[start:]
-    start_path = start
-    path = urllib.parse.quote(path)
-    start = url.find("/")
-    n = 2
-    i = 0
-    while start >= 0 and i < n - 1:
-        start = url.find("/", start + 1)
-        i += 1
-    host = url[start + 1: start_path]
-    #print(host)
-    if args.h is None:
-        request = f"GET {path} HTTP/1.0\r\nAccept:application/json\r\n"
-    else:
-        request = f"GET {path} HTTP/1.0\r\n"
-        if "".join("".join(i) for i in args.h).lower().find("Accept") < 0:
-            request += "Accept:application/json\r\n"
-        for i in args.h:
-            request += "".join(i) + "\r\n"
-    if args.d is not None:
-        if not request.lower().find("content-length:") >= 0:
-            request += f"Content-length:{len(args.d)}\r\n"
-        request += "\r\n"
-        request += args.d + "\r\n\r\n"
-    elif args.f is not None:
-        if not request.lower().find("content-length:") >= 0:
-            request += f"Content-length:{len(args.f.read())}\r\n"
-        request += "\r\n"
-        request += args.d + "\r\n\r\n"
-    else:
-        request += "\r\n"
-    reply = http_client(host, request)
+    path = urllib.parse.urlparse(url).path
+    query= urllib.parse.urlparse(url).query
+    host=urllib.parse.urlparse(url).netloc
+    if len(query) > 0:
+        path += "?" + query
+    reply = http_client(host, post_header(path,args))
     final_output = ""
     if args.v:
         final_output = reply
@@ -172,33 +139,12 @@ def implement_post(args):
 
 def implement_get(args):
     url = args.URL
-    start = url.find("/")
-    n = 3
-    i=0
-    while start >= 0 and i < n-1:
-        start = url.find("/",start+1)
-        i += 1
-    path = url[start:]
-    start_path = start
-    path = urllib.parse.quote(path)
-    start = url.find("/")
-    n = 2
-    i=0
-    while start >= 0 and i < n - 1:
-        start = url.find("/", start + 1)
-        i += 1
-    host = url[start + 1: start_path]
-    if args.h is None:
-        request = f"GET {path} HTTP/1.0\r\nAccept:application/json\r\n\r\n"
-    else:
-        request = f"GET {path} HTTP/1.0\r\n"
-        print(args.h)
-        if "".join("".join(i) for i in args.h).lower().find("Accept:") < 0:
-            request += "Accept:application/json\r\n"
-        for i in args.h:
-            request += "".join(i) + "\r\n"
-        request += "\r\n"
-    reply = http_client(host, request)
+    path = urllib.parse.urlparse(url).path
+    query = urllib.parse.urlparse(url).query
+    host = urllib.parse.urlparse(url).netloc
+    if len(query)>0:
+        path += "?"+query
+    reply = http_client(host, get_header(path,args))
     final_output = ""
     if args.v:
         final_output = reply
@@ -218,6 +164,43 @@ def implement_get(args):
         print(final_output)
 
 
+def get_header(path, args):
+    if args.h is None:
+        request = f"GET {path} HTTP/1.0\r\nAccept:application/json\r\n\r\n"
+    else:
+        request = f"GET {path} HTTP/1.0\r\n"
+        print(args.h)
+        if "".join("".join(i) for i in args.h).lower().find("Accept:") < 0:
+            request += "Accept:application/json\r\n"
+        for i in args.h:
+            request += "".join(i) + "\r\n"
+        request += "\r\n"
+    return request
+
+
+def post_header(path, args):
+    if args.h is None:
+        request = f"GET {path} HTTP/1.0\r\nAccept:application/json\r\n"
+    else:
+        request = f"GET {path} HTTP/1.0\r\n"
+        if "".join("".join(i) for i in args.h).lower().find("Accept") < 0:
+            request += "Accept:application/json\r\n"
+        for i in args.h:
+            request += "".join(i) + "\r\n"
+    if args.d is not None:
+        if not request.lower().find("content-length:") >= 0:
+            request += f"Content-length:{len(args.d)}\r\n"
+        request += "\r\n"
+        request += args.d + "\r\n\r\n"
+    elif args.f is not None:
+        if not request.lower().find("content-length:") >= 0:
+            request += f"Content-length:{len(args.f.read())}\r\n"
+        request += "\r\n"
+        request += args.d + "\r\n\r\n"
+    else:
+        request += "\r\n"
+
+
 # Usage: python echoclient.py --host host --port port
 parser = argparse.ArgumentParser(prog="httpc")
 subparsers = parser.add_subparsers()
@@ -230,32 +213,25 @@ parser_help.set_defaults(function=implement_help)
 # create the parser for the "get" command
 parser_get = subparsers.add_parser('get', add_help=False, aliases=["Get", "GET"])
 parser_get.add_argument("-v", "--v", action="store_true", help="Display additional information")
-parser_get.add_argument("-h", "--h", action="append", type=key_value_validator, nargs="+", help=" Input headers for the request")
+parser_get.add_argument("-h", "--h", action="append", type=key_value_validator, nargs="+", help= "Input headers for the request")
 parser_get.add_argument("-o", "--o", type=argparse.FileType('r+'), default=sys.stdout)
-parser_get.add_argument("URL", type=validate_url, help="URL for sending request")
+parser_get.add_argument("URL", type=str, help="URL for sending request")
 parser_get.set_defaults(function=implement_get)
+
 
 # create the parser for the "post" command
 parser_post = subparsers.add_parser('post', add_help=False, aliases=["Post", "POST"])
 group = parser_post.add_mutually_exclusive_group()
 parser_post.add_argument("-v", "--v", action="store_true", help="Display additional information")
-parser_post.add_argument("-h", "--h", action="append", nargs="+", type=key_value_validator, help="Input headers for the request")
+parser_post.add_argument("-h", "--h", action="append", nargs="+", type=key_value_validator, help= "Input headers for the request")
 parser_post.add_argument("-o", "--o", type=argparse.FileType('a+'), default=sys.stdout)
 group.add_argument("-d", "--d", help="Input data for body from the console")
 group.add_argument("-f", "--f",  type=argparse.FileType('r'), default=sys.stdin)
 parser_post.add_argument("URL", type=validate_url, help="URL for sending request")
 parser_post.set_defaults(function=implement_post)
-
 args = parser.parse_args()
 args.function(args)
 
 
 
-'''if arg.method.lower() == "get":
-    parser.add_argument("URL", help="URL for sending request")
-    implement_get()
-elif arg.method.lower() == "help":
-    implement_help()
-elif arg.method.lower() == "post":
-    implement_post()'''
 # http_client(args.host, args.port)
