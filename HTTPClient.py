@@ -77,6 +77,7 @@ def key_value_validator(x):
 
 
 def http_client(host, request):
+    print(request)
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     output = ""
     try:
@@ -92,6 +93,7 @@ def http_client(host, request):
                 output += response.decode("utf-8")
             else:
                 break
+        print(output)
         return output
     finally:
         conn.close()
@@ -117,7 +119,7 @@ def implement_post(args):
     host=urllib.parse.urlparse(url).netloc
     if len(query) > 0:
         path += "?" + query
-    reply = http_client(host, post_header(path,args))
+    reply = http_client(host, post_header(path, args))
     final_output = ""
     if args.v:
         final_output = reply
@@ -194,11 +196,14 @@ def post_header(path, args):
         request += args.d + "\r\n\r\n"
     elif args.f is not None:
         if not request.lower().find("content-length:") >= 0:
+            print("**********"+args.f.read())
             request += f"Content-length:{len(args.f.read())}\r\n"
         request += "\r\n"
-        request += args.d + "\r\n\r\n"
+        request += args.f.read() + "\r\n\r\n"
     else:
-        request += "\r\n"
+        request = "\r\n"
+    print(request)
+    return request
 
 
 # Usage: python echoclient.py --host host --port port
@@ -214,7 +219,7 @@ parser_help.set_defaults(function=implement_help)
 parser_get = subparsers.add_parser('get', add_help=False, aliases=["Get", "GET"])
 parser_get.add_argument("-v", "--v", action="store_true", help="Display additional information")
 parser_get.add_argument("-h", "--h", action="append", type=key_value_validator, nargs="+", help= "Input headers for the request")
-parser_get.add_argument("-o", "--o", type=argparse.FileType('r+'), default=sys.stdout)
+parser_get.add_argument("-o", "--o", type=argparse.FileType('a+'), default=sys.stdout)
 parser_get.add_argument("URL", type=str, help="URL for sending request")
 parser_get.set_defaults(function=implement_get)
 
