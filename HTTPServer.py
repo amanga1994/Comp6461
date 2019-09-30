@@ -64,11 +64,15 @@ def http_client(host,request):
         print(output);
         responseCode = output.split("\n")[0].split(" ")[1];
         if(responseCode == "302"):
-            location = output.split("\r\n")[5].split(": ")[1];
-            temp = location.index(location.split("/")[3]);
-            final_url = location[temp:len(location)];
-            print("temp",temp);
-            request = "POST /" + final_url + " HTTP/1.0\r\n\r\n";
+            for i in output.split("\r\n"):
+                if(i.split(": ")[0] == ("Location")):
+                    # print("@@@@@@",i);
+                    location = i.split(": ")[1];
+                    # print("location = ", location)
+            queryParamIndex = location.index(location.split("/")[3]);
+            queryString = location[queryParamIndex:len(location)];
+            # print("temp",temp);
+            request = "GET /" + queryString + " HTTP/1.0\r\n\r\n";
             output = http_client(host, request);
         return output
     finally:
@@ -76,7 +80,6 @@ def http_client(host,request):
 host = "httpbin.org";
 # request = "GET /absolute-redirect/3?name=aman HTTP/1.0\r\n\r\n";
 # request = "GET /absolute-redirect/1?course=networking&assignment=1 HTTP/1.0\r\n\r\n";
-# request = "GET /redirect-to/get?course=networking&assignment=1 HTTP/1.0\r\n\r\n"
-# request = "GET /redirect-to?url=http://httpbin.org/get?course=networking&assignment=1 HTTP/1.0\r\n\r\n";
-request = "POST /redirect-to?url=http://httpbin.org/post HTTP/1.0\r\n\r\n";
+request = "GET /redirect-to?url=http://httpbin.org/get?course=networking&assignment=1 HTTP/1.0\r\n\r\n";
+# request = "POST /redirect-to?url=http://httpbin.org/post HTTP/1.0\r\n\r\n";
 http_client(host, request);
