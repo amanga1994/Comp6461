@@ -120,6 +120,10 @@ def implement_post(args):
     if len(query) > 0:
         path += "?" + query
     reply = http_client(host, post_header(path, args))
+    # Redirect functionality starts
+    responseCode = reply.split("\n")[0].split(" ")[1];
+    # Redirect functionality ends
+
     final_output = ""
     if args.v:
         final_output = reply
@@ -133,6 +137,15 @@ def implement_post(args):
                     final_output += i
         else:
             final_output = reply
+    # Redirect functionality starts
+    if (responseCode == "302"):
+        location = reply.split("\r\n")[5].split(": ")[1];
+        queryParamIndex = location.index(location.split("/")[3]);
+        queryString = location[queryParamIndex:len(location)];
+        # print("temp",temp);
+        request = "POST /" + queryString + " HTTP/1.0\r\n\r\n";
+        reply = http_client(host, request);
+    # Redirect functionality ends
     if args.o is not None:
         args.o.write(final_output)
     else:
@@ -147,6 +160,9 @@ def implement_get(args):
     if len(query)>0:
         path += "?"+query
     reply = http_client(host, get_header(path,args))
+    # Redirect functionality starts
+    responseCode = reply.split("\n")[0].split(" ")[1];
+    # Redirect functionality ends
     final_output = ""
     if args.v:
         final_output = reply
@@ -160,6 +176,14 @@ def implement_get(args):
                     final_output += i
         else:
             final_output = reply
+    # Redirect functionality starts
+    if (responseCode == "302"):
+        location = reply.split("\r\n")[5].split(": ")[1];
+        queryParamIndex = location.index(location.split("/")[3]);
+        queryString = location[queryParamIndex:len(location)];
+        request = "GET /" + queryString + " HTTP/1.0\r\n\r\n";
+        reply = http_client(host, request);
+    # Redirect functionality ends
     if args.o is not None:
         args.o.write(final_output)
     else:
