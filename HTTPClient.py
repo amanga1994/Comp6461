@@ -135,17 +135,20 @@ def implement_post(args):
                     flag = 1
                 if flag == 1:
                     final_output += i
+        # Redirect functionality starts
+        elif (responseCode == "302"):
+            # location = reply.split("\r\n")[5].split(": ")[1];
+            for i in reply.split("\r\n"):
+                if (i.split(": ")[0] == ("Location")):
+                    location = i.split(": ")[1];
+            queryParamIndex = location.index(location.split("/")[3]);
+            path = "/" + location[queryParamIndex:len(location)];
+            reply = http_client(host, post_header(path, args));
+        # Redirect functionality ends
         else:
             final_output = reply
-    # Redirect functionality starts
-    if (responseCode == "302"):
-        location = reply.split("\r\n")[5].split(": ")[1];
-        queryParamIndex = location.index(location.split("/")[3]);
-        queryString = location[queryParamIndex:len(location)];
-        # print("temp",temp);
-        request = "POST /" + queryString + " HTTP/1.0\r\n\r\n";
-        reply = http_client(host, request);
-    # Redirect functionality ends
+
+
     if args.o is not None:
         args.o.write(final_output)
     else:
@@ -174,16 +177,17 @@ def implement_get(args):
                     flag = 1
                 if flag == 1:
                     final_output += i
+        # Redirect functionality starts
+        elif (responseCode == "302"):
+            for i in reply.split("\r\n"):
+                if (i.split(": ")[0] == ("Location")):
+                    location = i.split(": ")[1];
+            queryParamIndex = location.index(location.split("/")[3]);
+            path = "/" + location[queryParamIndex:len(location)];
+            reply = http_client(host, get_header(path, args));
         else:
             final_output = reply
-    # Redirect functionality starts
-    if (responseCode == "302"):
-        location = reply.split("\r\n")[5].split(": ")[1];
-        queryParamIndex = location.index(location.split("/")[3]);
-        queryString = location[queryParamIndex:len(location)];
-        request = "GET /" + queryString + " HTTP/1.0\r\n\r\n";
-        reply = http_client(host, request);
-    # Redirect functionality ends
+
     if args.o is not None:
         args.o.write(final_output)
     else:
