@@ -77,15 +77,16 @@ def key_value_validator(x):
 
 
 def http_client(host, request):
-    print(request)
+    #print(request)
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     output = ""
+    #conn.settimeout(10000)
     try:
         conn.connect((host, 80))
         print("Type any thing then ENTER. Press Ctrl+C to terminate")
         print(ord(" "))
         request = request.encode("utf-8")
-        conn.send(request)
+        conn.sendall(request)
         while True:
             # MSG_WAITALL waits for full request or error
             response = conn.recv(len(request), socket.MSG_WAITALL)
@@ -93,14 +94,17 @@ def http_client(host, request):
                 output += response.decode("utf-8")
             else:
                 break
-        print(output)
+        # print("hi"+output)
         return output
+    except Exception as e:
+        print(e)
+        sys.exit()
     finally:
         conn.close()
 
 
 def implement_help(args):
-    print("help")
+    #print("help")
     if len(sys.argv) == 3 and args.help_method is not None:
         if args.help_method.lower() == "get":
             print("get help")
@@ -115,20 +119,22 @@ def implement_help(args):
 def implement_post(args):
     url = args.URL
     path = urllib.parse.urlparse(url).path
-    query= urllib.parse.urlparse(url).query
-    host=urllib.parse.urlparse(url).netloc
+    query = urllib.parse.urlparse(url).query
+    host = urllib.parse.urlparse(url).netloc
     if len(query) > 0:
         path += "?" + query
     reply = http_client(host, post_header(path, args))
     # Redirect functionality starts
-    responseCode = reply.split("\n")[0].split(" ")[1];
+    responseCode = ""
+    if (len(reply) > 0):
+        responseCode = reply.split("\n")[0].split(" ")[1];
     # Redirect functionality ends
 
     final_output = ""
     if args.v:
         final_output = reply
     else:
-        if reply.find("200 OK") >= 0:
+        if responseCode == '200':
             flag = 0
             for i in reply.split("\r\n"):
                 if len(i) == 0:
@@ -136,18 +142,18 @@ def implement_post(args):
                 if flag == 1:
                     final_output += i
         # Redirect functionality starts
-        elif (responseCode == "302"):
+        elif responseCode == "302":
             # location = reply.split("\r\n")[5].split(": ")[1];
             for i in reply.split("\r\n"):
-                if (i.split(": ")[0] == ("Location")):
+                if i.split(": ")[0] == "Location":
                     location = i.split(": ")[1];
             queryParamIndex = location.index(location.split("/")[3]);
             path = "/" + location[queryParamIndex:len(location)];
             reply = http_client(host, post_header(path, args));
+            final_output = reply
         # Redirect functionality ends
         else:
             final_output = reply
-
 
     if args.o is not None:
         args.o.write(final_output)
@@ -164,13 +170,15 @@ def implement_get(args):
         path += "?"+query
     reply = http_client(host, get_header(path,args))
     # Redirect functionality starts
-    responseCode = reply.split("\n")[0].split(" ")[1];
+    responseCode = ""
+    if(len(reply)>0):
+        responseCode = reply.split("\n")[0].split(" ")[1];
     # Redirect functionality ends
     final_output = ""
     if args.v:
         final_output = reply
     else:
-        if reply.find("200 OK") >= 0:
+        if responseCode == '200':
             flag = 0
             for i in reply.split("\r\n"):
                 if len(i) == 0:
@@ -178,9 +186,9 @@ def implement_get(args):
                 if flag == 1:
                     final_output += i
         # Redirect functionality starts
-        elif (responseCode == "302"):
+        elif responseCode == "302":
             for i in reply.split("\r\n"):
-                if (i.split(": ")[0] == ("Location")):
+                if i.split(": ")[0] == "Location":
                     location = i.split(": ")[1];
             queryParamIndex = location.index(location.split("/")[3]);
             path = "/" + location[queryParamIndex:len(location)];
@@ -199,8 +207,7 @@ def get_header(path, args):
         request = f"GET {path} HTTP/1.0\r\nAccept:application/json\r\n\r\n"
     else:
         request = f"GET {path} HTTP/1.0\r\n"
-        print(args.h)
-        if "".join("".join(i) for i in args.h).lower().find("Accept:") < 0:
+        if "".join("".join(i) for i in args.h).lower().find("accept:") < 0:
             request += "Accept:application/json\r\n"
         for i in args.h:
             request += "".join(i) + "\r\n"
@@ -210,10 +217,10 @@ def get_header(path, args):
 
 def post_header(path, args):
     if args.h is None:
-        request = f"GET {path} HTTP/1.0\r\nAccept:application/json\r\n"
+        request = f"POST {path} HTTP/1.0\r\nAccept:application/json\r\n"
     else:
-        request = f"GET {path} HTTP/1.0\r\n"
-        if "".join("".join(i) for i in args.h).lower().find("Accept") < 0:
+        request = f"POST {path} HTTP/1.0\r\n"
+        if "".join("".join(i) for i in args.h).lower().find("accept") < 0:
             request += "Accept:application/json\r\n"
         for i in args.h:
             request += "".join(i) + "\r\n"
@@ -224,13 +231,15 @@ def post_header(path, args):
         request += args.d + "\r\n\r\n"
     elif args.f is not None:
         if not request.lower().find("content-length:") >= 0:
-            print("**********"+args.f.read())
-            request += f"Content-length:{len(args.f.read())}\r\n"
+            #print("**********"+args.f.read())
+            filedata = args.f.read()
+            request += f"Content-length:{len(filedata)}\r\n"
         request += "\r\n"
-        request += args.f.read() + "\r\n\r\n"
+        request += f"{filedata}"
+        request +="\r\n\r\n"
     else:
         request = "\r\n"
-    print(request)
+    # print(request)
     return request
 
 
