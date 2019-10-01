@@ -80,7 +80,7 @@ def http_client(host, request):
     print(request)
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     output = ""
-    conn.settimeout(100000)
+    # conn.settimeout(100000)
     try:
         conn.connect((host, 80))
         print("Type any thing then ENTER. Press Ctrl+C to terminate")
@@ -101,16 +101,19 @@ def http_client(host, request):
             responseCode = output.split("\n")[0].split(" ")[1];
 
         if responseCode == '302':
-            print("302")
             # location = reply.split("\r\n")[5].split(": ")[1];
             for i in output.split("\r\n"):
                 if i.split(": ")[0] == "Location":
                     location = i.split(": ")[1];
-            print("302lo"+location)
+
             queryParamIndex = location.index(location.split("/")[3]);
             path = "/" + location[queryParamIndex:len(location)];
-            if sys.argv[0].lower().find("get") >=0:
+            # print("sys", sys.argv)
+
+            if sys.argv[1].lower().find("get") >=0:
                 output = http_client(host, get_header(path, args));
+                print("out", output)
+
             else:
                 output = http_client(host, post_header(path, args));
             final_output = output
@@ -175,7 +178,7 @@ def implement_post(args):
         else:
             final_output = reply
 
-    if args.o is not None:
+    if args.o.name != "<stdout>":
         args.o.write(final_output)
     else:
         print(final_output)
@@ -217,9 +220,7 @@ def implement_get(args):
             final_output = reply
         final_output=reply
 
-    if args.o is not None:
-        print(args.o,"@@@@@@")
-        print("Fileoutput")
+    if args.o.name != "<stdout>":
         args.o.write(final_output)
     else:
         print(final_output)
@@ -239,8 +240,6 @@ def get_header(path, args):
 
 
 def post_header(path, args):
-    print(args)
-    print("post")
     if args.h is None:
         request = f"POST {path} HTTP/1.0\r\nAccept:application/json\r\n"
     else:
@@ -254,8 +253,7 @@ def post_header(path, args):
             request += f"Content-length:{len(args.d)}\r\n"
         request += "\r\n"
         request += args.d + "\r\n\r\n"
-    elif args.f is not None:
-        print("file")
+    elif args.f.name !="<stdin>":
         if not request.lower().find("content-length:") >= 0:
             filedata = args.f.read()
             request += f"Content-length:{len(filedata)}\r\n"
@@ -263,8 +261,8 @@ def post_header(path, args):
         request += f"{filedata}"
         request +="\r\n\r\n"
     else:
-        request = "\r\n"
-    print(request)
+        request += "\r\n"
+    # print(request)
     return request
 
 
