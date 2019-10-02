@@ -22,6 +22,7 @@ SCHEME_FORMAT = re.compile(
 
 
 def validate_url(url):
+    #print("URL:"+url)
     url = url.strip()
     if not url:
         raise Exception("No URL specified")
@@ -77,14 +78,14 @@ def key_value_validator(x):
 
 
 def http_client(host, request):
-    print(request)
+    # print(request)
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     output = ""
     # conn.settimeout(100000)
     try:
         conn.connect((host, 80))
-        print("Type any thing then ENTER. Press Ctrl+C to terminate")
-        print(ord(" "))
+        # print("Type any thing then ENTER. Press Ctrl+C to terminate")
+        # print(ord(" "))
         request = request.encode("utf-8")
         conn.sendall(request)
         while True:
@@ -97,10 +98,10 @@ def http_client(host, request):
         # print("hi"+output)
 
         responseCode = ""
-        if (len(output) > 0):
+        if len(output) > 0:
             responseCode = output.split("\n")[0].split(" ")[1];
 
-        if responseCode == '302':
+        if responseCode[0] == '3':
             # location = reply.split("\r\n")[5].split(": ")[1];
             for i in output.split("\r\n"):
                 if i.split(": ")[0] == "Location":
@@ -112,13 +113,13 @@ def http_client(host, request):
 
             if sys.argv[1].lower().find("get") >=0:
                 output = http_client(host, get_header(path, args));
-                print("out", output)
+                # print("out", output)
 
             else:
                 output = http_client(host, post_header(path, args));
-            final_output = output
-        else:
-            final_output = output
+            # final_output = output
+        # else:
+        #     final_output = output
         return output
     except Exception as e:
         print(e)
@@ -146,11 +147,18 @@ def implement_post(args):
     query = urllib.parse.urlparse(url).query
     host = urllib.parse.urlparse(url).netloc
     if len(query) > 0:
+        # print(query)
+        if query.lower().find("url") >= 0:
+            val = urllib.parse.quote(query[4:])
+            query=query[0:4]+val
+        else:
+            query = urllib.parse.urlencode(urllib.parse.parse_qsl(query))
         path += "?" + query
+    #print(path)
     reply = http_client(host, post_header(path, args))
     # Redirect functionality starts
     responseCode = ""
-    if (len(reply) > 0):
+    if len(reply) > 0:
         responseCode = reply.split("\n")[0].split(" ")[1];
     # Redirect functionality ends
     final_output = ""
@@ -189,12 +197,18 @@ def implement_get(args):
     path = urllib.parse.urlparse(url).path
     query = urllib.parse.urlparse(url).query
     host = urllib.parse.urlparse(url).netloc
-    if len(query)>0:
-        path += "?"+query
+    if len(query) > 0:
+        # print(query)
+        if query.lower().find("url") >= 0:
+            val = urllib.parse.quote(query[4:])
+            query = query[0:4] + val
+        else:
+            query = urllib.parse.urlencode(urllib.parse.parse_qsl(query))
+        path += "?" + query
     reply = http_client(host, get_header(path,args))
     # Redirect functionality starts
     responseCode = ""
-    if(len(reply)>0):
+    if len(reply) > 0:
         responseCode = reply.split("\n")[0].split(" ")[1];
     # Redirect functionality ends
     final_output = ""
@@ -218,7 +232,6 @@ def implement_get(args):
         #     reply = http_client(host, get_header(path, args));
         else:
             final_output = reply
-        final_output=reply
 
     if args.o.name != "<stdout>":
         args.o.write(final_output)
@@ -240,9 +253,11 @@ def get_header(path, args):
 
 
 def post_header(path, args):
+    # print(path)
     if args.h is None:
         request = f"POST {path} HTTP/1.0\r\nAccept:application/json\r\n"
     else:
+
         request = f"POST {path} HTTP/1.0\r\n"
         if "".join("".join(i) for i in args.h).lower().find("accept") < 0:
             request += "Accept:application/json\r\n"
@@ -253,7 +268,7 @@ def post_header(path, args):
             request += f"Content-length:{len(args.d)}\r\n"
         request += "\r\n"
         request += args.d + "\r\n\r\n"
-    elif args.f.name !="<stdin>":
+    elif args.f.name != "<stdin>":
         if not request.lower().find("content-length:") >= 0:
             filedata = args.f.read()
             request += f"Content-length:{len(filedata)}\r\n"
@@ -278,7 +293,7 @@ parser_help.set_defaults(function=implement_help)
 # create the parser for the "get" command
 parser_get = subparsers.add_parser('get', add_help=False, aliases=["Get", "GET"])
 parser_get.add_argument("-v", "--v", action="store_true", help="Display additional information")
-parser_get.add_argument("-h", "--h", action="append", type=key_value_validator, nargs="+", help= "Input headers for the request")
+parser_get.add_argument("-h", "--h", action="append", type=key_value_validator, nargs="?", help= "Input headers for the request")
 parser_get.add_argument("-o", "--o", type=argparse.FileType('a+'), default=sys.stdout)
 parser_get.add_argument("URL", type=str, help="URL for sending request")
 parser_get.set_defaults(function=implement_get)
@@ -288,7 +303,7 @@ parser_get.set_defaults(function=implement_get)
 parser_post = subparsers.add_parser('post', add_help=False, aliases=["Post", "POST"])
 group = parser_post.add_mutually_exclusive_group()
 parser_post.add_argument("-v", "--v", action="store_true", help="Display additional information")
-parser_post.add_argument("-h", "--h", action="append", nargs="+", type=key_value_validator, help= "Input headers for the request")
+parser_post.add_argument("-h", "--h", action="append", nargs="?", type=key_value_validator, help= "Input headers for the request")
 parser_post.add_argument("-o", "--o", type=argparse.FileType('a+'), default=sys.stdout)
 group.add_argument("-d", "--d", help="Input data for body from the console")
 group.add_argument("-f", "--f",  type=argparse.FileType('r'), default=sys.stdin)
