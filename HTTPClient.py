@@ -22,7 +22,10 @@ SCHEME_FORMAT = re.compile(
 
 
 def validate_url(url):
-    #print("URL:"+url)
+    # print("URL:"+url)
+    url=url.strip("'")
+    # url=url.strip("'")
+    # print("URL:" + url)
     url = url.strip()
     if not url:
         raise Exception("No URL specified")
@@ -132,11 +135,34 @@ def implement_help(args):
     #print("help")
     if len(sys.argv) == 3 and args.help_method is not None:
         if args.help_method.lower() == "get":
-            print("get help")
+            print("""
+            usage: httpc get [-v] [-h key:value] URL 
+            Get executes a HTTP GET request for a given URL. 
+            -v Prints the detail of the response such as protocol, status, 
+            and headers. 
+            -h key:value Associates headers to HTTP Request with the format 
+            'key:value'.
+            """)
         elif args.help_method.lower() == "post":
-            print("post help")
+            print(""" 
+            usage: httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL 
+            Post executes a HTTP POST request for a given URL with inline data or from file. 
+            -v Prints the detail of the response such as protocol, status, and headers. 
+            -h key:value Associates headers to HTTP Request with the format 'key:value'. 
+            -d string Associates an inline data to the body HTTP POST request. 
+            -f file Associates the content of a file to the body HTTP POST request. 
+            Either [-d] or [-f] can be used but not both.
+            """)
     elif len(sys.argv) == 2:
-        print("program help")
+        print("""
+            httpc is a curl-like application but supports HTTP protocol only.
+            Usage:
+                httpc command [arguments] 
+                The commands are: 
+                get executes a HTTP GET request and prints the response. 
+                post executes a HTTP POST request and prints the response. 
+                help prints this screen. 
+            Use "httpc help [command]" for more information about a command.""")
     else:
         print("Invalid input")
 
@@ -153,8 +179,11 @@ def implement_post(args):
             query=query[0:4]+val
         else:
             query = urllib.parse.urlencode(urllib.parse.parse_qsl(query))
+        # print(path)
         path += "?" + query
-    #print(path)
+    # path +="?"+query
+
+    # print(path)
     reply = http_client(host, post_header(path, args))
     # Redirect functionality starts
     responseCode = ""
