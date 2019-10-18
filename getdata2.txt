@@ -1,0 +1,9 @@
+{
+  "args": {}, 
+  "headers": {
+    "Accept": "application/json", 
+    "Host": "10.100.2.83"
+  }, 
+  "origin": "67.69.76.48, 67.69.76.48", 
+  "url": "https://10.100.2.83/get"
+}

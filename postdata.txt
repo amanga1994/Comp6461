@@ -1,0 +1,14 @@
+{
+  "args": {}, 
+  "data": "getdata.txt", 
+  "files": {}, 
+  "form": {}, 
+  "headers": {
+    "Accept": "text/html", 
+    "Content-Length": "11", 
+    "Host": "10.100.70.151"
+  }, 
+  "json": null, 
+  "origin": "67.69.76.48, 67.69.76.48", 
+  "url": "https://10.100.70.151/post"
+}

@@ -1,0 +1,34 @@
+{
+  "args": {
+    "assignment": "1", 
+    "course": "networking"
+  }, 
+  "headers": {
+    "Accept": "application/json", 
+    "Host": "10.100.70.151"
+  }, 
+  "origin": "142.182.82.178, 142.182.82.178", 
+  "url": "https://10.100.70.151/get?course=networking&assignment=1"
+}
+HTTP/1.0 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: *
+Referrer-Policy: no-referrer-when-downgrade
+Content-Type: application/json
+Date: Mon, 30 Sep 2019 22:08:19 GMT
+Server: nginx
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Content-Length: 180
+Connection: keep-alive
+
+{
+  "args": {}, 
+  "headers": {
+    "Accept": "text/html", 
+    "Host": "52.87.16.148"
+  }, 
+  "origin": "132.205.229.113, 132.205.229.113", 
+  "url": "https://52.87.16.148/get"
+}
